@@ -1,4 +1,5 @@
 [![pipeline status](https://gitlab.linphone.org/BC/public/linphone-desktop/badges/master/pipeline.svg)](https://gitlab.linphone.org/BC/public/linphone-desktop/commits/master)
+### I fetch all the repos Linphone Desktop used and commit it here. hope it helps.
 
 # Linphone Desktop
 
