@@ -1,0 +1,4 @@
+mswinrtvid - WinRT Video plugin for mediastreamer2.
+
+Compile on Windows using Visual Studio 2012 when targetting Windows Phone 8.
+If targetting Windows Universal App, compile using Visual Studio 2015.

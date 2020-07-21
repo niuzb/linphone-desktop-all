@@ -1,0 +1,5 @@
+file(GLOB HEADER_FILES "speex/*.h")
+
+install(FILES ${HEADER_FILES}
+        DESTINATION include/speex
+        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)

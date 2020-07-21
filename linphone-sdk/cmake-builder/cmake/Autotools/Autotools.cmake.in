@@ -1,0 +1,57 @@
+############################################################################
+# Autotools.cmake.in
+# Copyright (C) 2014  Belledonne Communications, Grenoble France
+#
+############################################################################
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+############################################################################
+
+if("@CMAKE_C_COMPILER_ID@" STREQUAL "GNU")
+	string(REGEX REPLACE "gcc$" "as" AS_COMPILER "@CMAKE_C_COMPILER@")
+	if (AS_COMPILER STREQUAL "@CMAKE_C_COMPILER@")
+		#fallback for the case where gcc is found as /usr/bin/cc
+		string(REGEX REPLACE "cc$" "as" AS_COMPILER "@CMAKE_C_COMPILER@")
+	endif()
+	set(AUTOTOOLS_AS_COMPILER ${AS_COMPILER} CACHE PATH "Initial cache" FORCE)
+endif()
+set(C_LAUNCHER "")
+set(CXX_LAUNCHER "")
+if(NOT "@CMAKE_C_COMPILER_LAUNCHER@" STREQUAL "")
+       set(C_LAUNCHER "@CMAKE_C_COMPILER_LAUNCHER@ ")
+endif()
+if(NOT "@CMAKE_CXX_COMPILER_LAUNCHER@" STREQUAL "")
+       set(CXX_LAUNCHER "@CMAKE_CXX_COMPILER_LAUNCHER@ ")
+endif()
+set(AUTOTOOLS_C_COMPILER "${C_LAUNCHER}@CMAKE_C_COMPILER@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_CXX_COMPILER "${CXX_LAUNCHER}@CMAKE_CXX_COMPILER@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_OBJC_COMPILER "${C_LAUNCHER}@CMAKE_C_COMPILER@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_LINKER "@CMAKE_LINKER@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_AR "@CMAKE_AR@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_RANLIB "@CMAKE_RANLIB@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_STRIP "@CMAKE_STRIP@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_NM "@CMAKE_NM@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_C_COMPILER_NO_LAUNCHER "@CMAKE_C_COMPILER@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_CXX_COMPILER_NO_LAUNCHER "@CMAKE_CXX_COMPILER@" CACHE PATH "Initial cache" FORCE)
+set(AUTOTOOLS_OBJC_COMPILER_NO_LAUNCHER "@CMAKE_C_COMPILER@" CACHE PATH "Initial cache" FORCE)
+
+set(AUTOTOOLS_AS_FLAGS "@AUTOTOOLS_AS_FLAGS@" CACHE STRING "Initial cache" FORCE)
+set(AUTOTOOLS_C_FLAGS "@AUTOTOOLS_C_FLAGS@" CACHE STRING "Initial cache" FORCE)
+set(AUTOTOOLS_CPP_FLAGS "@AUTOTOOLS_CPP_FLAGS@" CACHE STRING "Initial cache" FORCE)
+set(AUTOTOOLS_CXX_FLAGS "@AUTOTOOLS_CXX_FLAGS@" CACHE STRING "Initial cache" FORCE)
+set(AUTOTOOLS_OBJC_FLAGS "@AUTOTOOLS_OBJC_FLAGS@" CACHE STRING "Initial cache" FORCE)
+set(AUTOTOOLS_LINKER_FLAGS "@AUTOTOOLS_LINKER_FLAGS@" CACHE STRING "Initial cache" FORCE)
+

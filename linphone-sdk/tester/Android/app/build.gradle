@@ -1,0 +1,87 @@
+apply plugin: 'com.android.application'
+
+def excludePackage = []
+excludePackage.add('**/gdb.*')
+excludePackage.add('**/libopenh264**')
+excludePackage.add('**/LICENSE.txt')
+
+static def isLocalAarAvailable() {
+    File debugAar = new File('linphone-sdk-android/linphone-sdk-android-debug.aar')
+    File releaseAar = new File('linphone-sdk-android/linphone-sdk-android-release.aar')
+    return debugAar.exists() || releaseAar.exists()
+}
+
+repositories {
+    maven {
+        // Switch to release for releases !
+        url "https://gitlab.linphone.org/BC/public/maven_repository/raw/master"
+    }
+}
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "org.linphone.tester"
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    testOptions {
+        // Changes the directory where Gradle saves test reports. By default, Gradle saves test reports
+        // in the path_to_your_project/module_name/build/outputs/reports/ directory.
+        // '$rootDir' sets the path relative to the root directory of the current project.
+        reportDir "$rootDir/"
+        // Changes the directory where Gradle saves test results. By default, Gradle saves test results
+        // in the path_to_your_project/module_name/build/outputs/test-results/ directory.
+        // '$rootDir' sets the path relative to the root directory of the current project.
+        resultsDir "$rootDir/"
+    }
+
+    sourceSets {
+        main {
+            packagingOptions {
+                excludes = excludePackage
+            }
+        }
+    }
+
+    packagingOptions {
+        pickFirst 'META-INF/NOTICE'
+        pickFirst 'META-INF/LICENSE'
+        exclude 'META-INF/MANIFEST.MF'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+
+    if (isLocalAarAvailable()) {
+        implementation project(":linphone-sdk-android")
+    } else {
+        implementation "org.linphone:linphone-sdk-android:4.1+"
+    }
+
+    // Required for instrumented tests
+    implementation 'androidx.test:runner:1.2.0'
+    implementation 'androidx.test:rules:1.2.0'
+}
+
+// Grant permissions
+task grantPermissions {
+    def adb = android.getAdbExecutable().toString()
+    "${adb} devices".execute().text.eachLine {
+        if(it.endsWith("device")){
+            def device = it.split()[0]
+            println "Granting permissions on devices ${device}"
+            "${adb} shell pm grant ${android.defaultConfig.applicationId} android.permission.RECORD_AUDIO".execute()
+            "${adb} shell pm grant ${android.defaultConfig.applicationId} android.permission.WRITE_EXTERNAL_STORAGE".execute()
+            "${adb} shell pm grant ${android.defaultConfig.applicationId} android.permission.CAMERA".execute()
+            "${adb} shell pm grant ${android.defaultConfig.applicationId} android.permission.WRITE_EXTERNAL_STORAGE".execute()
+        }
+    }
+}

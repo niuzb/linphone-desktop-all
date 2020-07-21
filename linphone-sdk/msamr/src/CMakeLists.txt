@@ -1,0 +1,95 @@
+############################################################################
+# CMakeLists.txt
+# Copyright (C) 2014  Belledonne Communications, Grenoble France
+#
+############################################################################
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+############################################################################
+
+if(MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+	find_library(LIBGCC NAMES gcc)
+	find_library(LIBMINGWEX NAMES mingwex)
+endif()
+
+set(LIBS
+	${LIBGCC}
+	${LIBMINGWEX}
+	${MEDIASTREAMER2_LIBRARIES}
+	${ORTP_LIBRARIES}
+	${BCTOOLBOX_CORE_LIBRARIES}
+)
+
+set(SOURCE_FILES msamr.c)
+if(ENABLE_NARROWBAND)
+	list(APPEND SOURCE_FILES amrnb.c)
+	list(APPEND LIBS ${OPENCOREAMRNB_LIBRARIES})
+endif()
+if(ENABLE_WIDEBAND)
+	list(APPEND SOURCE_FILES amrwb.c)
+	list(APPEND LIBS ${OPENCOREAMRWB_LIBRARIES} ${VOAMRWBENC_LIBRARIES})
+endif()
+
+set(MS2_PLUGINS_DIR "${MEDIASTREAMER2_PLUGINS_LOCATION}")
+
+if(ENABLE_STATIC)
+	add_library(msamr-static STATIC ${SOURCE_FILES})
+	set_target_properties(msamr-static PROPERTIES OUTPUT_NAME msamr)
+	target_link_libraries(msamr-static ${LIBS})
+	install(TARGETS msamr-static
+		ARCHIVE DESTINATION "${MS2_PLUGINS_DIR}"
+		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+	)
+endif()
+if(ENABLE_SHARED)
+	if(NOT IOS)
+		add_library(msamr MODULE ${SOURCE_FILES})
+	else()
+		add_library(msamr SHARED ${SOURCE_FILES})
+	endif()
+	target_link_libraries(msamr ${LIBS})
+	if(APPLE)
+		if(IOS)
+			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
+			set_target_properties(msamr 	PROPERTIES
+							FRAMEWORK TRUE
+							MACOSX_FRAMEWORK_IDENTIFIER org.linphone.msamr
+							MACOSX_FRAMEWORK_INFO_PLIST Info.plist.in
+			)	 
+
+		else()
+			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
+		endif()
+		set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/osx/")
+	endif()
+	if(MSVC)
+		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/libmsamr.pdb
+				DESTINATION ${CMAKE_INSTALL_BINDIR}
+				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+			)
+		endif()
+		set_target_properties(msamr PROPERTIES PREFIX "lib")
+	endif()
+	
+	install(TARGETS msamr
+		RUNTIME DESTINATION "${MS2_PLUGINS_DIR}"
+		LIBRARY DESTINATION "${MS2_PLUGINS_DIR}"
+		ARCHIVE DESTINATION "${MS2_PLUGINS_DIR}"
+		FRAMEWORK DESTINATION Frameworks
+		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+	)
+endif()

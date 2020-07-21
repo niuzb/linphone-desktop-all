@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# ==============================================================================
+# Tool to check the syntax of `.qml`/`.js` files.
+# ==============================================================================
+
+RESOURCES_FILE='resources.qrc'
+LINTER=qmllint
+
+RED='\e[1;31m'
+GREEN='\e[1;32m'
+BLUE='\e[1;34m'
+NC='\e[0m'
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${SCRIPT_DIR}/.."
+
+# ==============================================================================
+
+if ! [ -x "$( command -v "$LINTER" )" ]; then
+  printf "${RED}Unable to find ${LINTER}.${NC}\n"
+  exit 0
+fi
+
+"${LINTER}" -v 2> /dev/null 1>&2
+if [[ $? != 0 ]] ; then
+  printf "${RED}Unable to check qml syntax.${NC}\n"
+  exit 0
+fi
+
+printf "${BLUE}Checking qml files...${NC}\n"
+
+so_far_so_good=0
+while read file; do
+  $LINTER "$file"
+  if [[ $? != 0 ]] ; then
+    so_far_so_good=1
+  fi
+done < <(git diff --name-only --cached --diff-filter=d | grep -E '\.(qml|js|js\.spec)$')
+
+if [[ $so_far_so_good == 0 ]]; then
+  printf "${GREEN}Done. No qml error found.\n"
+else
+  printf "${RED}One or more errors were found. Please to fix them.\n"
+fi
+printf "${NC}"
+
+exit $so_far_so_good

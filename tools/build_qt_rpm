@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+# See: http://wiki.qt.io/Building_Qt_5_from_Git
+# See: http://doc.qt.io/qt-5/configure-options.html
+
+REPO_URL='https://gitlab.linphone.org/BC/public/external/qt/qt5.git'
+QT_VERSION='5.12.5'
+
+RPM_NAME=linphone-qt-${QT_VERSION}
+
+REPO_FOLDER=linphone-qt
+RPM_FOLDER=rpm-${RPM_NAME}
+
+# ==============================================================================
+RED='\e[1;31m'
+NC='\e[0m'
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${SCRIPT_DIR}/.."
+
+# ==============================================================================
+
+if [ ! -d "${REPO_FOLDER}/.git" ]; then
+  
+  #Simplest way to use paralle fetch if available
+  #Otherwise we would have to parse the git version number
+  git clone "${REPO_URL}" "${REPO_FOLDER}" --recursive -j 12 || git clone "${REPO_URL}" "${REPO_FOLDER}"
+fi
+cd "${REPO_FOLDER}"
+while test $# -gt 0
+do
+  case "$1" in
+    --clean)
+      echo "Clean..."
+      git submodule foreach 'git clean -dfx'
+      ;;
+    --*) echo "Invalid option: $1"
+      ;;
+  esac
+  shift
+done
+
+git checkout "${QT_VERSION}"
+git submodule foreach --recursive 'if [ -n "$(git branch -a | grep 5.12.5)" ]; then git checkout 5.12.5; fi'
+if [[ $? != 0 ]] ; then
+  printf "${RED}Unable to checkout ${QT_VERSION}.${NC}\n"
+  exit 1
+fi
+
+./init-repository --module-subset=default,\
+-qtandroidextras,\
+-qtcharts,\
+-qtdoc,\
+-qtlocation,\
+-qtmacextras,\
+-qtnetworkauth,\
+-qtpurchasing,\
+-qtremoteobjects,\
+-qtrepotools,\
+-qtscript,\
+-qtscxml,\
+-qtsensors,\
+-qtspeech,\
+-qtwebchannel,\
+-qtwebengine,\
+-qtwebglplugin,\
+-qtwebsockets,\
+-qtwebview,\
+-qtwinextras,\
+-qtx11extras,\
+-qtxmlpatterns \
+-f
+
+cd ..
+
+mkdir -p ${RPM_FOLDER}/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+#use pigz to parallelize compression
+tar --transform "s/^${REPO_FOLDER}/${RPM_NAME}/" -c ${REPO_FOLDER}/ | pigz -p 24 > ${RPM_FOLDER}/rpmbuild/SOURCES/${RPM_NAME}.tar.gz 
+#tar --transform "s/^${REPO_FOLDER}/" -czvf ${RPM_FOLDER}/rpmbuild/SOURCES/${RPM_NAME}.tar.gz ${REPO_FOLDER}/
+
+rpmbuild -bb --define "_topdir $PWD/${RPM_FOLDER}/rpmbuild" build/rpm/qt5.spec

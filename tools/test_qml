@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+# ==============================================================================
+# Tool to run unit tests on all `*.spec.qml` files.
+# ==============================================================================
+
+TEST_RUNNER='qmltestrunner'
+
+RESOURCES_FILE='resources.qrc'
+TEST_FILE_EXTENSION='spec.qml'
+
+DEV_MODULES_PATH='./ui/dev-modules'
+MODULES_PATH='./ui/modules'
+SCRIPTS_PATH='./ui/scripts'
+
+RED='\e[1;31m'
+GREEN='\e[1;32m'
+BLUE='\e[1;34m'
+NC='\e[0m'
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${SCRIPT_DIR}/.."
+
+# ==============================================================================
+
+if ! [ -x "$( command -v "$TEST_RUNNER" )" ]; then
+  printf "${RED}Unable to find `$TEST_RUNNER`. No tests can be executed.${NC}\n"
+  exit 0
+fi
+
+git diff --name-only --cached --diff-filter=d | grep -Eq '\.(qml|js|js\.spec)$'
+if [[ $? != 0 ]] ; then
+  exit 0
+fi
+
+# Check all `*.spec.qml` files.
+so_far_so_good=0
+while read line
+do
+  source_file=$(
+    printf "$line" |
+      sed -n 's/^\s*<\s*file\s*>\s*\(.*\.\(qml\|js\)\)\s*<\s*\/\s*file\s*>\s*$/\1/p'
+    )
+  if [[ ! -z  $source_file ]]; then
+    spec_file="${source_file%.*}.${TEST_FILE_EXTENSION}"
+
+    if [ -f $spec_file ]; then
+      printf "${BLUE}Running unit qml tests of '${source_file}'...${NC}\n"
+      $TEST_RUNNER -import $DEV_MODULES_PATH -import $MODULES_PATH -import $SCRIPTS_PATH -input "$spec_file"
+
+      if [[ $? == 0 ]]; then
+        printf "${GREEN}All unit tests have succeeded for '${spec_file}'.\n"
+      else
+        printf "${RED}Unit tests have failed for '${spec_file}'.\n"
+        so_far_so_good=1
+      fi
+      printf "${NC}\n"
+    fi
+  fi
+done < $RESOURCES_FILE
+
+if [[ $so_far_so_good == 0 ]]; then
+  printf "${GREEN}Done. All tests have succeeded.\n"
+else
+  printf "${RED}Fail. One or many tests have failed.\n"
+  so_far_so_good=1
+fi
+printf "${NC}\n"
+
+exit $so_far_so_good

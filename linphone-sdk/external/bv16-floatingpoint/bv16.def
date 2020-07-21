@@ -1,0 +1,10 @@
+LIBRARY bv16
+EXPORTS
+	Reset_BV16_Encoder
+	Reset_BV16_Decoder
+	BV16_Encode
+	BV16_BitPack
+	BV16_BitUnPack
+	BV16_Decode
+	BV16_PLC
+
