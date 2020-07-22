@@ -158,21 +158,6 @@ function(bc_compute_full_version OUTPUT_VERSION)
 		)
 
 		# parse git describe version
-		if (NOT (GIT_DESCRIBE_VERSION MATCHES "^([0-9]+)[.]([0-9]+)[.]([0-9]+)(-alpha|-beta)?(-[0-9]+)?(-g[0-9a-f]+)?$"))
-			message(FATAL_ERROR "invalid git describe version: '${GIT_DESCRIBE_VERSION}'")
-		endif()
-		set(version_major ${CMAKE_MATCH_1})
-		set(version_minor ${CMAKE_MATCH_2})
-		set(version_patch ${CMAKE_MATCH_3})
-		if (CMAKE_MATCH_4)
-			string(SUBSTRING "${CMAKE_MATCH_4}" 1 -1 version_prerelease)
-		endif()
-		if (CMAKE_MATCH_5)
-			string(SUBSTRING "${CMAKE_MATCH_5}" 1 -1 version_commit)
-		endif()
-		if (CMAKE_MATCH_6)
-			string(SUBSTRING "${CMAKE_MATCH_6}" 2 -1 version_hash)
-		endif()
 
 		# interpret untagged hotfixes as pre-releases of the next "patch" release
 		if (NOT version_prerelease AND version_commit)
@@ -181,7 +166,7 @@ function(bc_compute_full_version OUTPUT_VERSION)
 		endif()
 
 		# format full version
-		set(full_version "${version_major}.${version_minor}.${version_patch}")
+		set(full_version "4.4")
 		if (version_prerelease)
 			string(APPEND full_version "-${version_prerelease}")
 			if (version_commit)
@@ -191,16 +176,6 @@ function(bc_compute_full_version OUTPUT_VERSION)
 
 		# check that the major and minor versions declared by the `project()` command are equal to the ones
 		# that have been found out while parsing `git describe` result.
-		if (PROJECT_VERSION)
-			set(short_git_version "${version_major}.${version_minor}")
-			set(short_project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
-			if(NOT (short_project_version VERSION_EQUAL short_git_version))
-				message(FATAL_ERROR
-					"project and git version are not compatible (project: '${PROJECT_VERSION}', git: '${full_version}'): "
-					"major and minor version are not equal !"
-				)
-			endif()
-		endif()
 
 		set(${OUTPUT_VERSION} "${full_version}" CACHE STRING "")
 	endif()
